@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AppVersion Demo</title>
+    <link rel="stylesheet" href="../style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  </head>
+  <body>
+    <main>
+      <p><a href="../">← All demo apps</a></p>
+      <h1>AppVersion Demo</h1>
+      <p class="sub">Demo for the <code>capacitor-app-version</code> plugin — shows <code>getBuildInfo().source</code> on screen.</p>
+
+      <div class="card download">
+        <div id="qr"></div>
+        <div>
+          <h2>Android</h2>
+          <a class="btn" id="apk" href="#">Download APK</a>
+          <div class="meta" id="meta">Built by CI on every push to <code>main</code>.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Install on Android</h2>
+        <ol>
+          <li>Scan the QR code with the phone camera (or tap <b>Download APK</b> on the phone).</li>
+          <li>Open the downloaded <code>app-version-demo.apk</code>. Allow <b>Install unknown apps</b> for the browser if asked.</li>
+          <li>Open <b>AppVersion Demo</b>. It should show <b>APK</b>.</li>
+        </ol>
+        <p class="meta">Already installed an older build? It updates in place. If Android refuses (signature conflict), uninstall the old one first.</p>
+      </div>
+
+      <div class="card">
+        <h2>What you should see</h2>
+        <table>
+          <tr><th>Installed from</th><th>Shows</th></tr>
+          <tr><td>This page (CI build)</td><td><code>APK</code></td></tr>
+          <tr><td>Built and run locally from Android Studio / <code>cap run</code></td><td><code>DEBUG</code></td></tr>
+          <tr><td>Google Play</td><td><code>PLAY</code></td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>iOS</h2>
+        <p class="disabled">Not published. An installable iOS build needs signing (ad hoc profile with your device UDID, or TestFlight),
+          so iOS is tested by building locally (<code>npx cap run ios</code> → <code>DEBUG</code>).</p>
+      </div>
+    </main>
+
+    <script>
+      const REPO = 'tucarmd/demo-apps';
+      const TAG = 'app-version-latest';
+      const FILE = 'app-version-demo.apk';
+      const apkUrl = `https://github.com/${REPO}/releases/download/${TAG}/${FILE}`;
+
+      document.getElementById('apk').href = apkUrl;
+      new QRCode(document.getElementById('qr'), { text: apkUrl, width: 180, height: 180, correctLevel: QRCode.CorrectLevel.M });
+
+      // Public GitHub API, no auth: show when the APK was last built.
+      fetch(`https://api.github.com/repos/${REPO}/releases/tags/${TAG}`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+        .then((release) => {
+          const asset = release.assets.find((a) => a.name === FILE);
+          if (!asset) return;
+          const mb = (asset.size / 1024 / 1024).toFixed(1);
+          const date = new Date(asset.updated_at).toLocaleString();
+          document.getElementById('meta').textContent = `${mb} MB · updated ${date}`;
+        })
+        .catch(() => {});
+    </script>
+  </body>
+</html>
